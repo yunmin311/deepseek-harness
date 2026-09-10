@@ -80,6 +80,16 @@ describe('target-neutral Conversation apply wiring', () => {
     expect(header?.store).toBe(session?.store)
     expect(b.runtime.slots.spec('conversation.composer'))
       .toEqual({ kind: 'chain', scope: 'session' })
+    expect(b.runtime.slots.spec('conversation.hero.composer.dock'))
+      .toEqual({ kind: 'list', scope: 'session' })
+    b.runtime.slots.register({
+      name: 'conversation.hero.composer.dock', id: 'first', order: 0,
+    }, (() => null) as never)
+    b.runtime.slots.register({
+      name: 'conversation.hero.composer.dock', id: 'second', order: 0,
+    }, (() => null) as never)
+    expect(b.runtime.slots.entries('conversation.hero.composer.dock').map(row => row.options.id))
+      .toEqual(['first', 'second'])
     expect(b.runtime.slots.entries('settings.general.item').map(row => row.options.id))
       .toEqual(['composer-enter'])
     await b.runtime.dispose()

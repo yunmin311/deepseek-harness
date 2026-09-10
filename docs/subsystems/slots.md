@@ -158,6 +158,7 @@ root
 │     ├─ conversation.composer.dock
 │     ├─ conversation.input.left
 │     ├─ conversation.input.right
+│     ├─ conversation.hero.composer.dock
 │     ├─ conversation.hero.brand.mark
 │     ├─ conversation.hero.workspace
 │     │  └─ conversation.hero.workspace.directoryFlow

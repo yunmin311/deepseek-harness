@@ -1,0 +1,6 @@
+# Bilingual-pair consistency record (docs/i18n/README.md): the git blob hash of each
+# side as of the last confirmed-consistent state. Both languages carry equal authority;
+# after editing either side, bring the other along and re-record with:
+#   pnpm run verify-translation-pairing --write .agents/notes/implemented/architecture/2026-09-09-hero-composer-additive-dock.md
+2026-09-09-hero-composer-additive-dock.md: e60125b498ea53bba5eec06b6048919b3726e2ea
+2026-09-09-hero-composer-additive-dock.zh.md: bc8676ec7e04445d553bf2ca22f61f3685b49260

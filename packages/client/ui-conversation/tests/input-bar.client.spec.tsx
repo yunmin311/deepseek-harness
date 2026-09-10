@@ -92,6 +92,8 @@ interface BenchOptions {
   leftItems?: React.ReactNode
   rightItems?: React.ReactNode
   footer?: React.ReactNode
+  heroDock?: React.ReactNode
+  noSession?: boolean
   attachments?: readonly ComposerAttachment[]
   /** Upload states served for file-kind drafts (absent = every file is ready). */
   fileUploads?: DraftFileUploads
@@ -159,13 +161,14 @@ function bench(over?: BenchOptions) {
     if (key === 'conversation.input.left') return over?.leftItems ?? null
     if (key === 'conversation.input.right') return over?.rightItems ?? null
     if (key === 'conversation.composer.dock') return over?.footer ?? null
+    if (key === 'conversation.hero.composer.dock') return over?.heroDock ?? null
     if (key === 'conversation.input.plan') return over?.planEntry ?? null
     if (key === 'conversation.input.model') return over?.modelEntry ?? null
     return null
   }) as never
   const props: InputBarProps = {
     usePanelInfo: selector => selector({ activePanelId: null }),
-    sessionId: SID,
+    sessionId: over?.noSession === true ? undefined : SID,
     SessionProvider: ({ children }) => children,
     useSession: bindSnapshotSelector(session),
     useConversation: bindSnapshotSelector(createSnapshotStore(conversationFixture())),
@@ -184,8 +187,8 @@ function bench(over?: BenchOptions) {
         : key === 'plan' ? over?.plan
           : key === 'goal' ? over?.goal
             : key === 'imageLimits' ? over?.imageLimits : undefined)),
-    useInput: bindSnapshotSelector(shell.state),
-    inputActions: shell.actions,
+    useInput: over?.noSession === true ? (() => undefined) : bindSnapshotSelector(shell.state),
+    inputActions: over?.noSession === true ? undefined : shell.actions,
     keyboard: shell,
     addFiles: over?.addFiles ?? (() => null),
     useFileUploads: bindSnapshotSelector(createSnapshotStore<DraftFileUploads>(over?.fileUploads ?? {})),
@@ -1475,6 +1478,42 @@ describe('strips and variants', () => {
     const { view } = bench({ variant: 'hero', accessory: <i data-testid="acc" /> })
     expect(view.getByTestId('acc')).toBeTruthy()
     expect(view.container.querySelector('[class*="hero"]')).not.toBeNull()
+  })
+
+  it('renders the Hero dock after the resident card in normal flow without replacing it', () => {
+    const { view, slotCalls } = bench({
+      variant: 'hero',
+      heroDock: <div data-testid="hero-dock"><span>first</span><span>second</span></div>,
+      footer: <i data-testid="active-dock" />,
+    })
+    const card = view.container.querySelector('[data-composer-card]')
+    const dock = view.getByTestId('hero-dock')
+    expect(card).not.toBeNull()
+    expect(card?.nextElementSibling).toBe(dock)
+    expect([...dock.children].map(child => child.textContent)).toEqual(['first', 'second'])
+    expect(getComputedStyle(dock).position).toBe('static')
+    expect(view.queryByTestId('active-dock')).toBeNull()
+    expect(slotCalls.some(call => call.key === 'conversation.hero.composer.dock')).toBe(true)
+  })
+
+  it('keeps the active composer dock unchanged and omits the Hero dock', () => {
+    const { view, slotCalls } = bench({
+      variant: 'composer',
+      heroDock: <i data-testid="hero-dock" />,
+      footer: <i data-testid="active-dock" />,
+    })
+    expect(view.getByTestId('active-dock')).toBeTruthy()
+    expect(view.queryByTestId('hero-dock')).toBeNull()
+    expect(slotCalls.some(call => call.key === 'conversation.hero.composer.dock')).toBe(false)
+  })
+
+  it('omits the Hero dock without a real Session', () => {
+    const { view, slotCalls } = bench({
+      variant: 'hero', noSession: true, heroDock: <i data-testid="hero-dock" />,
+    })
+    expect(view.container.querySelector('[data-composer-card]')).not.toBeNull()
+    expect(view.queryByTestId('hero-dock')).toBeNull()
+    expect(slotCalls.some(call => call.key === 'conversation.hero.composer.dock')).toBe(false)
   })
 
   it('renders overlay, left/right, and footer slots at their layout positions', () => {
